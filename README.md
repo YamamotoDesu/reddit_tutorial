@@ -109,7 +109,24 @@ firebase_core: ^2.9.0
   firebase_auth: ^4.4.0
   google_sign_in: ^6.1.0
   flutter_riverpod: ^2.3.4
- ```
+```
+ 
+android/app/google-services.json
+```json
+{
+  "project_info": {        // START: FlutterFire Configuration
+        classpath 'com.google.gms:google-services:4.3.10'
+        // END: FlutterFire Configuration
+        
+```
+
+android/build.gradle
+```dart
+        // START: FlutterFire Configuration
+        classpath 'com.google.gms:google-services:4.3.10'
+        // END: FlutterFire Configuration
+```
+
 
 lib/main.dart
 ```dart
@@ -132,8 +149,9 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
 }
 ```
 
-
-
+```
+pod install
+```
 
 ## Google Sign In Firebase Authentication
 
