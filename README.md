@@ -285,3 +285,178 @@ class SignInButton extends ConsumerWidget {
   }
 }
 ```
+
+## Storing Data to Firestore
+
+<img width="300" alt="スクリーンショット 2023-04-10 21 16 53" src="https://user-images.githubusercontent.com/47273077/231105413-b0b2e9cc-e6aa-4b32-8c6c-bd6ce40c8288.gif">
+
+firebase_constants.dart
+```dart
+class FirebaseConstants {
+  static const usersCollection = 'users';
+  static const communitiesCollection = 'communities';
+  static const postsCollection = 'posts';
+  static const commentsCollection = 'comments';
+}
+```
+
+constants.dart
+```dart
+  static const bannerDefault =
+      'https://thumbs.dreamstime.com/b/abstract-stained-pattern-rectangle-background-blue-sky-over-fiery-red-orange-color-modern-painting-art-watercolor-effe-texture-123047399.jpg';
+  static const avatarDefault =
+      'https://external-preview.redd.it/5kh5OreeLd85QsqYO1Xz_4XSLYwZntfjqou-8fyBFoE.png?auto=webp&s=dbdabd04c399ce9c761ff899f5d38656d1de87c2';
+}
+```
+
+user_model.dart
+```dart
+
+import 'package:flutter/foundation.dart';
+
+class UserModel {
+  final String name;
+  final String profilePic;
+  final String banner;
+  final String uid;
+  final bool isAuthenticated; // if guest or not
+  final int karma;
+  final List<String> awards;
+  UserModel({
+    required this.name,
+    required this.profilePic,
+    required this.banner,
+    required this.uid,
+    required this.isAuthenticated,
+    required this.karma,
+    required this.awards,
+  });
+
+  UserModel copyWith({
+    String? name,
+    String? profilePic,
+    String? banner,
+    String? uid,
+    bool? isAuthenticated,
+    int? karma,
+    List<String>? awards,
+  }) {
+    return UserModel(
+      name: name ?? this.name,
+      profilePic: profilePic ?? this.profilePic,
+      banner: banner ?? this.banner,
+      uid: uid ?? this.uid,
+      isAuthenticated: isAuthenticated ?? this.isAuthenticated,
+      karma: karma ?? this.karma,
+      awards: awards ?? this.awards,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'name': name,
+      'profilePic': profilePic,
+      'banner': banner,
+      'uid': uid,
+      'isAuthenticated': isAuthenticated,
+      'karma': karma,
+      'awards': awards,
+    };
+  }
+
+  factory UserModel.fromMap(Map<String, dynamic> map) {
+    return UserModel(
+        name: map['name'] as String,
+        profilePic: map['profilePic'] as String,
+        banner: map['banner'] as String,
+        uid: map['uid'] as String,
+        isAuthenticated: map['isAuthenticated'] as bool,
+        karma: map['karma'] as int,
+        awards: List<String>.from(
+          (map['awards'] as List<String>),
+        ));
+  }
+
+  @override
+  String toString() {
+    return 'UserModel(name: $name, profilePic: $profilePic, banner: $banner, uid: $uid, isAuthenticated: $isAuthenticated, karma: $karma, awards: $awards)';
+  }
+
+  @override
+  bool operator ==(covariant UserModel other) {
+    if (identical(this, other)) return true;
+
+    return other.name == name &&
+        other.profilePic == profilePic &&
+        other.banner == banner &&
+        other.uid == uid &&
+        other.isAuthenticated == isAuthenticated &&
+        other.karma == karma &&
+        listEquals(other.awards, awards);
+  }
+
+  @override
+  int get hashCode {
+    return name.hashCode ^
+        profilePic.hashCode ^
+        banner.hashCode ^
+        uid.hashCode ^
+        isAuthenticated.hashCode ^
+        karma.hashCode ^
+        awards.hashCode;
+  }
+}
+```
+
+auth_repository.dart
+```dart
+final authRepositoryProvider = Provider((ref) => AuthRepository(
+    firestore: ref.read(firestoreProvider),
+    auth: ref.read(authProvider),
+    googleSignIn: ref.read(googleSignInProvider)));
+
+class AuthRepository {
+  final FirebaseFirestore _firebase;
+  final FirebaseAuth _auth;
+  final GoogleSignIn _googleSignIn;
+
+  AuthRepository({
+    required FirebaseFirestore firestore,
+    required FirebaseAuth auth,
+    required GoogleSignIn googleSignIn,
+  })  : _auth = auth,
+        _firebase = firestore,
+        _googleSignIn = googleSignIn;
+
+        CollectionReference get _user => _firebase.collection(FirebaseConstants.usersCollection);
+
+  void signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+
+      final googleAuth = await googleUser?.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth?.accessToken,
+        idToken: googleAuth?.idToken,
+      );
+
+      UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
+
+      UserModel userModel = UserModel(
+          name: userCredential.user!.displayName ?? 'No Name',
+          profilePic: userCredential.user!.photoURL ?? Constants.avatarDefault,
+          banner: Constants.bannerDefault,
+          uid: userCredential.user!.uid,
+          isAuthenticated: true,
+          karma: 0,
+          awards: []);
+
+      await _user.doc(userCredential.user!.uid).set(userModel.toMap());
+    } catch (e) {
+      print(e);
+    }
+  }
+}
+```
