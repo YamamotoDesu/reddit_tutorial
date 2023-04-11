@@ -100,7 +100,7 @@ class SignInButton extends StatelessWidget {
 ```
 
 ## Firebase Setup
- 
+
 pubspec.yaml
 ```yaml
 firebase_core: ^2.9.0
@@ -154,6 +154,8 @@ pod install
 ```
 
 ## Google Sign In Firebase Authentication
+
+<img width="898" alt="スクリーンショット 2023-04-11 17 47 37" src="https://user-images.githubusercontent.com/47273077/231106809-2ebba8e3-7cdc-46e0-b4e7-4a49f22c7b1e.png">
 
 lib/main.dart
 ```dart
@@ -289,6 +291,9 @@ class SignInButton extends ConsumerWidget {
 ## Storing Data to Firestore
 
 <img width="300" alt="スクリーンショット 2023-04-10 21 16 53" src="https://user-images.githubusercontent.com/47273077/231105413-b0b2e9cc-e6aa-4b32-8c6c-bd6ce40c8288.gif">
+
+<img width="920" alt="スクリーンショット 2023-04-11 17 47 19" src="https://user-images.githubusercontent.com/47273077/231106719-97f2f9de-dc8f-43b4-9e02-389aba1dfe22.png">
+
 
 firebase_constants.dart
 ```dart
