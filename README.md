@@ -155,3 +155,133 @@ pod install
 
 ## Google Sign In Firebase Authentication
 
+lib/main.dart
+```dart
+await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(const ProviderScope(child: MyApp()));
+}
+```
+
+lib/features/auth/repository/auth_repository.dart
+```dart
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:reddit_tutorial/core/providers/firebase_providers.dart';
+
+final authRepositoryProvider = Provider((ref) => AuthRepository(
+    firestore: ref.read(firestoreProvider),
+    auth: ref.read(authProvider),
+    googleSignIn: ref.read(googleSignInProvider)));
+
+class AuthRepository {
+  final FirebaseFirestore _firebase;
+  final FirebaseAuth _auth;
+  final GoogleSignIn _googleSignIn;
+
+  AuthRepository({
+    required FirebaseFirestore firestore,
+    required FirebaseAuth auth,
+    required GoogleSignIn googleSignIn,
+  })  : _auth = auth,
+        _firebase = firestore,
+        _googleSignIn = googleSignIn;
+
+  void signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+
+      final googleAuth = await googleUser?.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth?.accessToken,
+        idToken: googleAuth?.idToken,
+      );
+
+      UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
+
+      print(userCredential.user?.email);
+    } catch (e) {
+      print(e);
+    }
+  }
+}
+```
+
+lib/features/auth/controller/auth_controller.dart
+```dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../repository/auth_repository.dart';
+
+final authControllerProvider = Provider((ref) => AuthController(authRepository: ref.read(authRepositoryProvider)));
+
+class AuthController {
+  final AuthRepository _authRepository;
+  AuthController({required AuthRepository authRepository})
+      : _authRepository = authRepository;
+
+  void signInWithGoogle() {
+    _authRepository.signInWithGoogle();
+  }
+}
+```
+
+lib/core/providers/firebase_providers.dart
+```dart
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
+final firestoreProvider = Provider((ref) => FirebaseFirestore.instance);
+final authProvider = Provider((ref) => FirebaseAuth.instance);
+final storageProvider = Provider((ref) => FirebaseStorage.instance);
+final googleSignInProvider = Provider((ref) => GoogleSignIn());
+```
+
+lib/core/common/sign_in_button.dart
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:reddit_tutorial/core/constants/constants.dart';
+import 'package:reddit_tutorial/features/auth/controller/auth_controller.dart';
+import 'package:reddit_tutorial/theme/pallete.dart';
+
+class SignInButton extends ConsumerWidget {
+  const SignInButton({super.key});
+
+  void signInWithGoogle(WidgetRef ref) {
+    ref.read(authControllerProvider).signInWithGoogle();
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.all(18.0),
+      child: ElevatedButton.icon(
+          onPressed: () => signInWithGoogle(ref),
+          icon: Image.asset(
+            Constants.googlePath,
+            width: 35,
+          ),
+          label: const Text(
+            'Continue with Google',
+            style: TextStyle(fontSize: 18),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Pallete.greyColor,
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          )),
+    );
+  }
+}
+```
