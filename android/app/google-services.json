@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "477248099693",
+    "project_id": "reddit-clone-tutorial-7c240",
+    "storage_bucket": "reddit-clone-tutorial-7c240.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:477248099693:android:ba9080ac1e6bf3b647b664",
+        "android_client_info": {
+          "package_name": "com.example.reddit_tutorial"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "477248099693-bfsp8o7gaehgs86pleg2rcj09r4nu924.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAPKDTxuIk6B-0BLDAlYwQQzIn_YXq8lt4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "477248099693-bfsp8o7gaehgs86pleg2rcj09r4nu924.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
