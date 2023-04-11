@@ -98,3 +98,42 @@ class SignInButton extends StatelessWidget {
   }
 }
 ```
+
+## Firebase Setup
+ 
+pubspec.yaml
+```yaml
+firebase_core: ^2.9.0
+  firebase_storage: ^11.1.0
+  cloud_firestore: ^4.5.0
+  firebase_auth: ^4.4.0
+  google_sign_in: ^6.1.0
+  flutter_riverpod: ^2.3.4
+ ```
+
+lib/main.dart
+```dart
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(const MyApp());
+}
+```
+
+macos/Flutter/GeneratedPluginRegistrant.swift
+```dart
+func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
+  FLTFirebaseFirestorePlugin.register(with: registry.registrar(forPlugin: "FLTFirebaseFirestorePlugin"))
+  FLTFirebaseAuthPlugin.register(with: registry.registrar(forPlugin: "FLTFirebaseAuthPlugin"))
+  FLTFirebaseCorePlugin.register(with: registry.registrar(forPlugin: "FLTFirebaseCorePlugin"))
+  FLTFirebaseStoragePlugin.register(with: registry.registrar(forPlugin: "FLTFirebaseStoragePlugin"))
+}
+```
+
+
+
+
+## Google Sign In Firebase Authentication
+
