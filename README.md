@@ -709,3 +709,151 @@ class MyApp extends StatelessWidget {
   }
 }
 ```
+
+## Firebase State Persistence
+lib/core/common/error_text.dart
+```dart
+import 'package:flutter/material.dart';
+
+class ErrorText extends StatelessWidget {
+  final String error;
+  const ErrorText({super.key, required this.error});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text(error),);
+  }
+}
+```
+
+ 
+lib/features/auth/controller/auth_controller.dart
+```dart
+final userProvider = StateProvider<UserModel?>((ref) => null);
+
+final authControllerProvider = StateNotifierProvider<AuthController, bool>(
+    (ref) => AuthController(
+        authRepository: ref.watch(authRepositoryProvider), ref: ref));
+
+final authStateChangeProvider = StreamProvider((ref) {
+  final authController = ref.watch(authControllerProvider.notifier);
+  return authController.authStateChange;
+});
+
+final getUserDataProvider = StreamProvider.family((ref, String uid) {
+  final authController = ref.watch(authControllerProvider.notifier);
+  return authController.getUserData(uid);
+});
+
+class AuthController extends StateNotifier<bool> {
+  final AuthRepository _authRepository;
+  final Ref _ref;
+  AuthController({required AuthRepository authRepository, required Ref ref})
+      : _authRepository = authRepository,
+        _ref = ref,
+        super(false); //loading
+
+  Stream<User?> get authStateChange => _authRepository.authStateChange;
+
+  void signInWithGoogle(BuildContext context) async {
+    state = true;
+    final user = await _authRepository.signInWithGoogle();
+    state = false;
+    user.fold(
+      (l) => showSnackBar(context, l.message),
+      (userModel) =>
+          _ref.read(userProvider.notifier).update((state) => userModel),
+    );
+  }
+
+  Stream<UserModel> getUserData(String uid) {
+    return _authRepository.getUserData(uid);
+  }
+}
+```
+
+lib/features/auth/repository/auth_repository.dart
+```dart
+  Stream<User?> get authStateChange => _auth.authStateChanges();
+  
+```
+
+ 
+lib/features/home/screen/home_screen.dart
+```dart
+
+class HomeScreen extends ConsumerWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(userProvider)!;
+
+    return Scaffold(
+      body: Center(child: Text(user.name)),
+    );
+  }
+}
+```
+
+lib/main.dart
+```dart
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(const ProviderScope(child: MyApp()));
+}
+
+class MyApp extends ConsumerStatefulWidget {
+  const MyApp({super.key});
+
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> {
+  UserModel? userModel;
+
+  void getData(WidgetRef ref, User data) async {
+    userModel = await ref
+        .watch(authControllerProvider.notifier)
+        .getUserData(data.uid)
+        .first;
+    ref.read(userProvider.notifier).update((state) => userModel);
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ref.watch(authStateChangeProvider).when(
+          data: (data) => MaterialApp.router(
+            debugShowCheckedModeBanner: false,
+            title: 'Reddit Tutorial',
+            theme: Pallete.darkModeAppTheme,
+            routerDelegate: RoutemasterDelegate(routesBuilder: (context) {
+              if (data != null) {
+                getData(ref, data);
+                if (userModel != null) {
+                  return loggedInRoute;
+                }
+              }
+              return loggedOutRoute;
+            }),
+            routeInformationParser: const RoutemasterParser(),
+          ),
+          error: (error, stackTrace) => ErrorText(error: error.toString()),
+          loading: () => const Loader(),
+        );
+  }
+}
+```
+
+lib/router.dart
+```dart
+final loggedInRoute = RouteMap(routes: {
+  '/': (_) => const MaterialPage(child: HomeScreen()),
+});
+```
