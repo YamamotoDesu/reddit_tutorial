@@ -664,13 +664,4 @@ class LoginScreen extends ConsumerWidget {
           Constants.logoPath,
  ```
  
-  
-lib/core/common/sign_in_button.dart
-```dart
-class SignInButton extends ConsumerWidget {
-  const SignInButton({super.key});
 
-  void signInWithGoogle(BuildContext context, WidgetRef ref) {
-    ref.read(authControllerProvider.notifier).signInWithGoogle(context);
-  }
-```
