@@ -465,3 +465,131 @@ class AuthRepository {
   }
 }
 ```
+
+## Efficient Exception Handling Technique
+
+pubspec.yaml
+```yml
+  fpdart: ^0.5.0
+```
+
+lib/core/failure.dart
+```dart
+class Failure {
+  final String message;
+  Failure(this.message);
+}
+```
+
+lib/core/type_defs.dart
+```dart
+import 'package:fpdart/fpdart.dart';
+
+import 'failure.dart';
+
+typedef FutureEither<T> = Future<Either<Failure, T>>;
+typedef FutureVoid = FutureEither<void>;
+
+```dart
+import 'package:flutter/material.dart';
+
+void showSnackBar(BuildContext context, String text) {
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        content: Text(text),
+      ),
+    );
+}
+```
+
+ 
+lib/core/utils.dart
+```dart
+
+import 'package:flutter/material.dart';
+
+void showSnackBar(BuildContext context, String text) {
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        content: Text(text),
+      ),
+    );
+}
+```
+
+lib/features/auth/controller/auth_controller.dart
+```dart
+final authControllerProvider = Provider(
+    (ref) => AuthController(authRepository: ref.read(authRepositoryProvider)));
+
+  void signInWithGoogle(BuildContext context) async {
+    final user = await _authRepository.signInWithGoogle();
+    user.fold((l) => showSnackBar(context, l.message), (r) => null);
+  }
+```
+
+lib/features/auth/repository/auth_repository.dart
+```dart
+final authRepositoryProvider = Provider((ref) => AuthRepository(
+    firestore: ref.read(firestoreProvider),
+    auth: ref.read(authProvider),
+    googleSignIn: ref.read(googleSignInProvider)));
+
+class AuthRepository {
+  final FirebaseFirestore _firebase;
+  final FirebaseAuth _auth;
+  final GoogleSignIn _googleSignIn;
+
+  AuthRepository({
+    required FirebaseFirestore firestore,
+    required FirebaseAuth auth,
+    required GoogleSignIn googleSignIn,
+  })  : _auth = auth,
+        _firebase = firestore,
+        _googleSignIn = googleSignIn;
+
+  CollectionReference get _users =>
+      _firebase.collection(FirebaseConstants.usersCollection);
+
+  FutureEither<UserModel> signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+
+      final googleAuth = await googleUser?.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth?.accessToken,
+        idToken: googleAuth?.idToken,
+      );
+
+      UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
+
+      UserModel userModel;
+
+      if (userCredential.additionalUserInfo!.isNewUser) {
+        userModel = UserModel(
+            name: userCredential.user!.displayName ?? 'No Name',
+            profilePic:
+                userCredential.user!.photoURL ?? Constants.avatarDefault,
+            banner: Constants.bannerDefault,
+            uid: userCredential.user!.uid,
+            isAuthenticated: true,
+            karma: 0,
+            awards: []);
+        await _users.doc(userCredential.user!.uid).set(userModel.toMap());
+      } else {
+        userModel = await getUserData(userCredential.user!.uid).first;
+      }
+      return right(userModel);
+    } on FirebaseException catch (e) {
+      throw e.message!;
+    } catch (e) {
+      return left(Failure(e.toString()));
+    }
+  }
+  ```
