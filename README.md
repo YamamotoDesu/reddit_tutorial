@@ -1,7 +1,7 @@
 # reddit_tutorial
 
 A new Flutter project.
-https://github.com/tomgilder/routemaster
+https://github.com/RivaanRanawat/flutter-reddit-clone
 
 ## Getting Started
 
