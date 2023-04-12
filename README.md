@@ -592,4 +592,85 @@ class AuthRepository {
       return left(Failure(e.toString()));
     }
   }
-  ```
+```
+## [Storing Data to Provider](https://github.com/YamamotoDesu/reddit_tutorial/commit/ede07571a365f88911f7233826b9c0e85688bfdb)
+  
+<img width="300" alt="スクリーンショット 2023-04-10 21 16 53" src="https://user-images.githubusercontent.com/47273077/231353532-9d2cfb3e-6c37-43d5-a04e-e5270686a271.gif">
+ 
+lib/core/common/loader.dart
+```dart
+import 'package:flutter/material.dart';
+
+class Loader extends StatelessWidget {
+  const Loader({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: CircularProgressIndicator(),
+    );
+  }
+}
+```
+ 
+lib/core/common/sign_in_button.dart
+```dart
+  void signInWithGoogle(BuildContext context, WidgetRef ref) {
+    ref.read(authControllerProvider.notifier).signInWithGoogle(context);
+  }
+```
+
+lib/features/auth/controller/auth_controller.dart
+```dart
+final userProvider = StateProvider<UserModel?>((ref) => null);
+
+final authControllerProvider = StateNotifierProvider<AuthController, bool>(
+    (ref) => AuthController(
+        authRepository: ref.watch(authRepositoryProvider), ref: ref));
+
+class AuthController extends StateNotifier<bool> {
+  final AuthRepository _authRepository;
+  final Ref _ref;
+  AuthController({required AuthRepository authRepository, required Ref ref})
+      : _authRepository = authRepository,
+        _ref = ref,
+        super(false); //loading
+
+  void signInWithGoogle(BuildContext context) async {
+    state = true;
+    final user = await _authRepository.signInWithGoogle();
+    state = false;
+    user.fold(
+      (l) => showSnackBar(context, l.message),
+      (userModel) =>
+          _ref.read(userProvider.notifier).update((state) => userModel),
+    );
+  }
+}
+```
+
+
+lib/features/auth/screens/login_screen.dart
+```dart
+class LoginScreen extends ConsumerWidget {
+  const LoginScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isLoading = ref.watch(authControllerProvider);
+    return Scaffold(
+      appBar: AppBar(
+        title: Image.asset(
+          Constants.logoPath,
+ ```
+ 
+  
+lib/core/common/sign_in_button.dart
+```dart
+class SignInButton extends ConsumerWidget {
+  const SignInButton({super.key});
+
+  void signInWithGoogle(BuildContext context, WidgetRef ref) {
+    ref.read(authControllerProvider.notifier).signInWithGoogle(context);
+  }
+```
